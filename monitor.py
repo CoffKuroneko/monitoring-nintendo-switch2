@@ -41,6 +41,7 @@ while True:
             if not packet_lost:
                 with open(LOG_FILE, "a") as f:
                     f.write(f"{now}\n")
+                    f.write(f"{name}\n")
                     f.write("パケットロス検知\n")
                     f.write("\n")
 
