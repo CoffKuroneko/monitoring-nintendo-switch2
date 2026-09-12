@@ -37,7 +37,9 @@ while True:
         #. → 小数点も許可
         #+ → 1文字以上続く
         match = re.search(r"time=([\d.]+)", result.stdout)
-    
+
+        ping_time = None
+
         #matchは文字列なので、floatに変換してping_timeに入れる
         if match:
             ping_time = float(match.group(1))
@@ -70,7 +72,7 @@ while True:
 
                 packet_lost = True
 
-            elif ping_time > 100:
+            elif ping_time is not None and ping_time > 10:
                 with open(LOG_FILE, "a") as f:
                     f.write(f"{now}\n")
                     f.write(result.stdout)
