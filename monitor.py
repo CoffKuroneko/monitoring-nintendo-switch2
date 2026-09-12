@@ -75,5 +75,4 @@ while True:
             else:
                 packet_lost = False
             
-
-            time.sleep(1)
+        time.sleep(1)
