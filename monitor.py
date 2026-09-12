@@ -19,6 +19,11 @@ switch2_fail_count = 0
 
 while True:
     for name, ip in TARGETS.items():
+
+        # Switch2がofflineなら、Switch2以外は監視しない
+        if not switch2_online and name != "switch2":
+            continue
+
         result = subprocess.run(
             ["ping", "-c", "1", ip],
             capture_output=True, #コマンドの出力をPython側で受け取るための指定
