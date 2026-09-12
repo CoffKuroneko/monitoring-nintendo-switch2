@@ -14,6 +14,8 @@ TARGETS = {
 
 LOG_FILE = "ping.log"
 packet_lost = False
+switch2_online = True
+switch2_fail_count = 0
 
 while True:
     for name, ip in TARGETS.items():
@@ -36,26 +38,42 @@ while True:
             ping_time = float(match.group(1))
 
 
+        if name == "switch2":
+            if result.returncode != 0:
+                if switch2_fail_count < 3:
+                    switch2_fail_count += 1
+
+            elif result.returncode == 0:
+                switch2_fail_count = 0
+
+            if switch2_fail_count >= 3:
+                switch2_online = False
+
+            else:
+                switch2_online = True
+            
+
         #result.returncode 0 応答あり, 1 応答なし
-        if result.returncode != 0:
-            if not packet_lost:
+        if switch2_online:
+            if result.returncode != 0:
+                if not packet_lost:
+                    with open(LOG_FILE, "a") as f:
+                        f.write(f"{now}\n")
+                        f.write(f"{name}\n")
+                        f.write("パケットロス検知\n")
+                        f.write("\n")
+
+                packet_lost = True
+
+            elif ping_time > 100:
                 with open(LOG_FILE, "a") as f:
                     f.write(f"{now}\n")
-                    f.write(f"{name}\n")
-                    f.write("パケットロス検知\n")
+                    f.write(result.stdout)
                     f.write("\n")
-
-            packet_lost = True
-
-        elif ping_time > 100:
-            with open(LOG_FILE, "a") as f:
-                f.write(f"{now}\n")
-                f.write(result.stdout)
-                f.write("\n")
+                
+                packet_lost = False
+            else:
+                packet_lost = False
             
-            packet_lost = False
-        else:
-            packet_lost = False
-        
 
-        time.sleep(1)
+            time.sleep(1)
