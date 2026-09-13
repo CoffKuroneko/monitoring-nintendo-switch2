@@ -4,6 +4,9 @@ import time
 import re
 import os
 
+SWITCH2_FAIL_THRESHOLD = 3
+PING_DELAY_THRESHOLD = 1
+
 TARGETS = {
     "router": os.environ.get("ROUTER_IP"),
     "switch2": os.environ.get("SWITCH2_IP"),
@@ -11,9 +14,9 @@ TARGETS = {
     "cloudflare_dns": "1.1.1.1",
 }
 
+packet_lost = {name: False for name in TARGETS}
 
 LOG_FILE = "ping.log"
-packet_lost = False
 switch2_online = True
 switch2_fail_count = 0
 
@@ -47,39 +50,36 @@ while True:
 
         if name == "switch2":
             if result.returncode != 0:
-                if switch2_fail_count < 3:
+                if switch2_fail_count < SWITCH2_FAIL_THRESHOLD:
                     switch2_fail_count += 1
+                elif switch2_fail_count >= SWITCH2_FAIL_THRESHOLD:
+                    switch2_online = False
 
             elif result.returncode == 0:
                 switch2_fail_count = 0
-
-            if switch2_fail_count >= 3:
-                switch2_online = False
-
-            else:
                 switch2_online = True
             
 
         #result.returncode 0 応答あり, 1 応答なし
         if switch2_online:
             if result.returncode != 0:
-                if not packet_lost:
+                if not packet_lost[name]:
                     with open(LOG_FILE, "a") as f:
                         f.write(f"{now}\n")
-                        f.write(f"{name}\n")
+                        f.write(f"{name}:packet loss\n")
                         f.write("パケットロス検知\n")
                         f.write("\n")
 
-                packet_lost = True
+                packet_lost[name] = True
 
-            elif ping_time is not None and ping_time > 10:
+            elif ping_time is not None and ping_time > PING_DELAY_THRESHOLD:
                 with open(LOG_FILE, "a") as f:
                     f.write(f"{now}\n")
                     f.write(result.stdout)
                     f.write("\n")
                 
-                packet_lost = False
+                packet_lost[name] = False
             else:
-                packet_lost = False
+                packet_lost[name] = False
             
         time.sleep(1)
