@@ -5,7 +5,7 @@ import re
 import os
 
 SWITCH2_FAIL_THRESHOLD = 3
-PING_DELAY_THRESHOLD = 1
+PING_DELAY_THRESHOLD = 100
 
 TARGETS = {
     "router": os.environ.get("ROUTER_IP"),
